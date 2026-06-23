@@ -1,25 +1,387 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Experiment Study</title>
-  <style>
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      margin: 0;
-      background: #f5f5f5;
-    }
-    h1 {
-      color: #333;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>실험을 위한 통계지식</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;600;700&family=IBM+Plex+Sans+KR:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:           #EDF1F8;
+    --surface:      #FFFFFF;
+    --ink:          #0A2545;
+    --ink-soft:     #46566E;
+    --ink-faint:    #8492A8;
+    --line:         #D5DEEC;
+    --yonsei:       #00337F;
+    --yonsei-mid:   #1E5FB0;
+    --yonsei-light: #E6EDF7;
+    --yonsei-line:  #C4D4EA;
+    --formula-bg:   #062A5E;
+    --formula-ink:  #EAF0FA;
+    --formula-acc:  #9DC2EE;
+    --radius:       14px;
+    --maxw:         800px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "IBM Plex Sans KR", system-ui, sans-serif;
+    font-weight: 400;
+    line-height: 1.78;
+    letter-spacing: -0.005em;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: var(--maxw);
+    margin: 0 auto;
+    padding: 0 24px 96px;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    padding: 80px 0 60px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .eyebrow {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 18px;
+  }
+
+  .hero h1 {
+    font-family: "Noto Serif KR", serif;
+    font-weight: 700;
+    font-size: clamp(32px, 6vw, 52px);
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    margin-bottom: 20px;
+  }
+
+  .hero h1 .accent { color: var(--yonsei); }
+
+  .hero-sub {
+    font-size: clamp(15px, 2.2vw, 17px);
+    color: var(--ink-soft);
+    font-weight: 300;
+    max-width: 34em;
+    line-height: 1.8;
+    margin-bottom: 36px;
+  }
+
+  /* stat chips */
+  .hero-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 7px 14px;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12px;
+    color: var(--ink-soft);
+  }
+
+  .chip .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--yonsei-mid);
+    flex-shrink: 0;
+  }
+
+  /* ── ARTICLE LIST ── */
+  .list-head {
+    padding: 52px 0 20px;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 8px;
+  }
+
+  .list-head h2 {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+
+  .list-head .count {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12px;
+    color: var(--ink-faint);
+  }
+
+  /* ── ARTICLE CARD ── */
+  .card {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 28px 28px 24px;
+    margin-top: 14px;
+    transition: border-color 0.18s, transform 0.18s, box-shadow 0.18s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 4px; height: 100%;
+    background: var(--yonsei);
+    opacity: 0;
+    transition: opacity 0.18s;
+  }
+
+  .card:hover {
+    border-color: var(--yonsei-line);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px -12px rgba(0, 51, 127, 0.22);
+  }
+
+  .card:hover::before { opacity: 1; }
+  .card:focus-visible {
+    outline: 2px solid var(--yonsei);
+    outline-offset: 2px;
+  }
+
+  .card-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+
+  .card-num {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--yonsei);
+    background: var(--yonsei-light);
+    border: 1px solid var(--yonsei-line);
+    border-radius: 6px;
+    padding: 3px 9px;
+    line-height: 1.4;
+    flex-shrink: 0;
+  }
+
+  .card-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .card-tag {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11px;
+    color: var(--ink-faint);
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 2px 8px;
+  }
+
+  .card h3 {
+    font-family: "Noto Serif KR", serif;
+    font-weight: 600;
+    font-size: clamp(18px, 3vw, 22px);
+    letter-spacing: -0.01em;
+    line-height: 1.3;
+    color: var(--ink);
+    margin-bottom: 10px;
+  }
+
+  .card-desc {
+    font-size: 14px;
+    color: var(--ink-soft);
+    line-height: 1.75;
+    margin-bottom: 18px;
+    font-weight: 300;
+  }
+
+  /* key formula strip */
+  .card-formula {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 13px;
+    font-weight: 500;
+    background: var(--formula-bg);
+    color: var(--formula-ink);
+    border-radius: 8px;
+    padding: 11px 16px;
+    display: inline-block;
+    letter-spacing: 0.01em;
+  }
+
+  .card-formula .acc { color: var(--formula-acc); }
+
+  .card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    margin-top: 18px;
+    padding-top: 14px;
+    border-top: 1px solid var(--line);
+  }
+
+  .card-link {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--yonsei-mid);
+    letter-spacing: 0.06em;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: gap 0.18s;
+  }
+
+  .card:hover .card-link { gap: 10px; }
+
+  /* ── FOOTER ── */
+  footer {
+    margin-top: 72px;
+    padding-top: 26px;
+    border-top: 1px solid var(--line);
+    font-size: 13px;
+    color: var(--ink-faint);
+    text-align: center;
+    font-family: "IBM Plex Mono", monospace;
+    letter-spacing: 0.03em;
+  }
+
+  /* ── ENTRANCE ANIMATION ── */
+  .rise {
+    opacity: 0;
+    transform: translateY(14px);
+    animation: rise 0.7s cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+  }
+  @keyframes rise { to { opacity: 1; transform: none; } }
+
+  @media (max-width: 560px) {
+    .card { padding: 22px 20px 18px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .rise { animation: none; opacity: 1; transform: none; }
+    .card { transition: none; }
+    .card:hover { transform: none; }
+  }
+</style>
 </head>
 <body>
-  <h1>Experiment Study</h1>
+<div class="wrap">
+
+  <!-- HERO -->
+  <header class="hero">
+    <p class="eyebrow rise">Statistics for Experimentation</p>
+    <h1 class="rise" style="animation-delay:.06s">
+      실험을 위한<br><span class="accent">통계지식</span>
+    </h1>
+    <p class="hero-sub rise" style="animation-delay:.12s">
+      A/B 테스트와 데이터 기반 의사결정에 필요한 핵심 통계 개념을 수식과 예시로 정리합니다.
+    </p>
+    <div class="hero-chips rise" style="animation-delay:.18s">
+      <span class="chip"><span class="dot"></span>Variance Reduction</span>
+      <span class="chip"><span class="dot"></span>Sequential Testing</span>
+      <span class="chip"><span class="dot"></span>Multiple Comparisons</span>
+    </div>
+  </header>
+
+  <!-- ARTICLE LIST -->
+  <div class="list-head rise" style="animation-delay:.22s">
+    <h2>Article</h2>
+    <span class="count">3 articles</span>
+  </div>
+
+  <!-- Card 1: CUPED -->
+  <a class="card rise" href="cuped.html" style="animation-delay:.28s">
+    <div class="card-meta">
+      <span class="card-num">01</span>
+      <div class="card-tags">
+        <span class="card-tag">Variance Reduction</span>
+        <span class="card-tag">Microsoft Research · 2013</span>
+      </div>
+    </div>
+    <h3>CUPED 완전 정복</h3>
+    <p class="card-desc">실험 시작 전 사용자의 과거 데이터를 공변량으로 활용해 지표의 분산(노이즈)을 줄이고, 동일한 트래픽으로 더 빠르게 유의미한 결론에 도달하는 통계 기법입니다.</p>
+    <div class="card-formula">
+      Var(Y<sub style="font-size:.7em">cuped</sub>) = Var(Y) &times; (1 &minus; <span class="acc">&rho;</span>&sup2;)
+    </div>
+    <div class="card-footer">
+      <span class="card-link">읽기 →</span>
+    </div>
+  </a>
+
+  <!-- Card 2: Sequential Testing -->
+  <a class="card rise" href="sequential-testing.html" style="animation-delay:.34s">
+    <div class="card-meta">
+      <span class="card-num">02</span>
+      <div class="card-tags">
+        <span class="card-tag">mSPRT</span>
+        <span class="card-tag">Always-Valid Inference</span>
+        <span class="card-tag">Amplitude Experiment</span>
+      </div>
+    </div>
+    <h3>Sequential Testing 완전 정복</h3>
+    <p class="card-desc">사전 샘플 사이즈 설정 없이 실험 도중 언제든 결과를 들여다봐도 Type I 오류가 통제되는 가설 검정 방법입니다. Amplitude Experiment의 mSPRT 구현을 수식과 함께 설명합니다.</p>
+    <div class="card-formula">
+      &Lambda;<sub style="font-size:.7em">n</sub> &ge; 1/<span class="acc">&alpha;</span> &ensp;&rarr;&ensp; H<sub style="font-size:.7em">0</sub> 기각
+    </div>
+    <div class="card-footer">
+      <span class="card-link">읽기 →</span>
+    </div>
+  </a>
+
+  <!-- Card 3: Bonferroni -->
+  <a class="card rise" href="BonferroniCorrection.html" style="animation-delay:.40s">
+    <div class="card-meta">
+      <span class="card-num">03</span>
+      <div class="card-tags">
+        <span class="card-tag">Multiple Comparisons</span>
+        <span class="card-tag">FWER Control</span>
+      </div>
+    </div>
+    <h3>Bonferroni Correction</h3>
+    <p class="card-desc">여러 지표를 동시에 검정할 때 1종 오류(False Positive)가 누적되는 다중비교 문제를 해결합니다. Boole 부등식을 기반으로 각 검정의 유의수준을 검정 개수만큼 나누는 가장 단순하고 안전한 보정법입니다.</p>
+    <div class="card-formula">
+      FWER &le; m &times; (<span class="acc">&alpha;</span> / m) = <span class="acc">&alpha;</span>
+    </div>
+    <div class="card-footer">
+      <span class="card-link">읽기 →</span>
+    </div>
+  </a>
+
+</div>
+
+<footer>실험을 위한 통계지식 · Statistics for Experimentation</footer>
+
 </body>
 </html>
