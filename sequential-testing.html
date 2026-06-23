@@ -725,22 +725,22 @@ body {
       <div class="hypo-card">
         <p class="hypo-label">귀무가설 (Null Hypothesis)</p>
         <div class="hypo-formula">H<sub style="font-size:.65em">0</sub> : &delta; = 0</div>
-        <p class="hypo-desc">처치(Treatment)가 대조군(Control) 대비 아무 효과가 없다</p>
+        <p class="hypo-desc">처리(Treatment)가 대조군(Control) 대비 아무 효과가 없다</p>
       </div>
       <div class="hypo-card">
         <p class="hypo-label">대립가설 (Alternative Hypothesis)</p>
         <div class="hypo-formula">H<sub style="font-size:.65em">1</sub> : &delta; &ne; 0</div>
-        <p class="hypo-desc">처치에 실질적인 효과가 존재한다 (양방향 검정)</p>
+        <p class="hypo-desc">처리(Treatment)에 실질적인 효과가 존재한다 (양방향 검정)</p>
       </div>
     </div>
 
     <div class="formula-step">
-      <span class="step-badge">처치 효과 정의</span>
+      <span class="step-badge">처리(Treatment) 효과 정의</span>
       <div class="formula-display large">&delta; = &mu;<sub style="font-size:.65em">treatment</sub> &minus; &mu;<sub style="font-size:.65em">control</sub></div>
       <div class="var-table" role="list">
         <div class="var-row" role="listitem">
           <span class="var-sym">&mu;<sub style="font-size:.7em">treatment</sub></span>
-          <span class="var-def">처치군(실험군)의 지표 모평균 — 새 기능/변경이 적용된 그룹</span>
+          <span class="var-def">처리(Treatment)군(실험군)의 지표 모평균 — 새 기능/변경이 적용된 그룹</span>
         </div>
         <div class="var-row" role="listitem">
           <span class="var-sym">&mu;<sub style="font-size:.7em">control</sub></span>
@@ -748,7 +748,7 @@ body {
         </div>
         <div class="var-row" role="listitem">
           <span class="var-sym">&delta;</span>
-          <span class="var-def">두 그룹 간 평균 차이 = 처치 효과(Treatment Effect). H₀에서는 0</span>
+          <span class="var-def">두 그룹 간 평균 차이 = 처리(Treatment) 효과(Treatment Effect). H₀에서는 0</span>
         </div>
       </div>
     </div>
@@ -795,7 +795,7 @@ body {
       <div class="formula-display">LR<sub style="font-size:.65em">n</sub> = P(X<sub style="font-size:.65em">1</sub>,...,X<sub style="font-size:.65em">n</sub> | &delta; = &delta;<sub style="font-size:.65em">1</sub>) &divide; P(X<sub style="font-size:.65em">1</sub>,...,X<sub style="font-size:.65em">n</sub> | &delta; = 0)</div>
       <div class="formula-note">
         <strong>문제:</strong> 고전 SPRT는 대립가설의 효과 크기 δ₁을 미리 고정해야 합니다.
-        하지만 실제 실험에서는 처치 효과가 얼마나 될지 사전에 알 수 없습니다.
+        하지만 실제 실험에서는 처리(Treatment) 효과가 얼마나 될지 사전에 알 수 없습니다.
         mSPRT는 이 한계를 정규 혼합 사전분포로 해결합니다.
       </div>
     </div>
@@ -837,11 +837,11 @@ body {
       <div class="var-table" role="list">
         <div class="var-row" role="listitem">
           <span class="var-sym">&delta;&#x302;<sub style="font-size:.7em">n</sub></span>
-          <span class="var-def">n번째 시점까지의 처치 효과 추정량: X̄<sub>treatment</sub> &minus; X̄<sub>control</sub></span>
+          <span class="var-def">n번째 시점까지의 처리(Treatment) 효과 추정량: X̄<sub>treatment</sub> &minus; X̄<sub>control</sub></span>
         </div>
         <div class="var-row" role="listitem">
           <span class="var-sym">SE<sub style="font-size:.7em">n</sub></span>
-          <span class="var-def">처치 효과 추정량의 표준 오차: &sigma;&radic;(1/n<sub>T</sub> + 1/n<sub>C</sub>). 샘플이 늘수록 작아집니다</span>
+          <span class="var-def">처리(Treatment) 효과 추정량의 표준 오차: &sigma;&radic;(1/n<sub>T</sub> + 1/n<sub>C</sub>). 샘플이 늘수록 작아집니다</span>
         </div>
         <div class="var-row" role="listitem">
           <span class="var-sym">&tau;&sup2;</span>
@@ -880,7 +880,7 @@ body {
       <span class="kr-badge">⑤ 최종 의사결정 규칙</span>
       <div class="kr-formula">&Lambda;<sub style="font-size:.62em">n</sub> &ge; 1/&alpha;&ensp;&harr;&ensp;p<sub style="font-size:.62em">n</sub> &le; &alpha;&ensp;&rarr;&ensp;H<sub style="font-size:.62em">0</sub> 기각</div>
       <p class="kr-sub">
-        α = 0.05인 경우, Λₙ ≥ 20이 되는 순간 실험을 종료하고 처치 효과를 인정합니다.<br>
+        α = 0.05인 경우, Λₙ ≥ 20이 되는 순간 실험을 종료하고 처리(Treatment) 효과를 인정합니다.<br>
         반대로 Λₙ이 1/α에 도달하기 전까지는 언제든 안전하게 결과를 모니터링할 수 있습니다.
       </p>
     </div>
@@ -935,7 +935,7 @@ body {
           <div class="sc-v">기존 "결제하기" 버튼</div>
         </div>
         <div class="sc-item">
-          <div class="sc-k">처치군 (Treatment)</div>
+          <div class="sc-k">처리(Treatment)군</div>
           <div class="sc-v">강조 버튼 + 보안 인증 배지 추가</div>
         </div>
         <div class="sc-item">
@@ -971,7 +971,7 @@ body {
             <th>실험 일차</th>
             <th>누적 n (각 그룹)</th>
             <th>대조군 전환율</th>
-            <th>처치군 전환율</th>
+            <th>처리(Treatment)군 전환율</th>
             <th>효과 추정 δ̂ₙ</th>
             <th>Λₙ</th>
             <th>pₙ</th>
@@ -1049,7 +1049,7 @@ body {
       <p class="card-label">결론 — 7일 만에 조기 종료</p>
       <p>
         7일차에 Λₙ = 22.6 ≥ 20 (= 1/0.05)에 도달했습니다.
-        <strong>H₀를 기각: 처치군의 결제 전환율이 통계적으로 유의미하게 높습니다.</strong>
+        <strong>H₀를 기각: 처리(Treatment)군의 결제 전환율이 통계적으로 유의미하게 높습니다.</strong>
         고정 기간 t-test였다면 사전 계획한 샘플 사이즈(예: 각 그룹 10,000명 = 10일)에 도달해야 결론을 낼 수 있었을 것입니다.
         Sequential Testing 덕분에 <strong>실험 기간을 30% 단축</strong>하고 더 빠르게 제품에 반영할 수 있습니다.
       </p>
@@ -1099,7 +1099,7 @@ body {
           <li>
             <div>
               <strong>단기 지표 중심 실험</strong>
-              클릭률, 즉시 전환율 등 처치 후 빠르게 반응이 나타나는 지표에서 효과적입니다.
+              클릭률, 즉시 전환율 등 처리(Treatment) 후 빠르게 반응이 나타나는 지표에서 효과적입니다.
             </div>
           </li>
         </ul>
@@ -1120,7 +1120,7 @@ body {
           <li>
             <div>
               <strong>장기 지표 / 지연 반응 지표</strong>
-              구독 갱신율, 30일 리텐션처럼 처치 효과가 수 주 뒤에 나타나는 지표는 Sequential Testing의 조기 종료 이점이 줄어듭니다.
+              구독 갱신율, 30일 리텐션처럼 처리(Treatment) 효과가 수 주 뒤에 나타나는 지표는 Sequential Testing의 조기 종료 이점이 줄어듭니다.
             </div>
           </li>
           <li>
