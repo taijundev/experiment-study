@@ -1,0 +1,1015 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>베이지안 통계 — 실험을 위한 통계지식</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;600;700&family=IBM+Plex+Sans+KR:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:           #EDF1F8;
+    --surface:      #FFFFFF;
+    --surface-2:    #F6F9FD;
+    --ink:          #0A2545;
+    --ink-soft:     #46566E;
+    --ink-faint:    #8492A8;
+    --line:         #D5DEEC;
+    --yonsei:       #00337F;
+    --yonsei-mid:   #1E5FB0;
+    --yonsei-light: #E6EDF7;
+    --yonsei-line:  #C4D4EA;
+    --formula-bg:   #062A5E;
+    --formula-ink:  #EAF0FA;
+    --formula-acc:  #9DC2EE;
+    --good:         #1B7F5A;
+    --warn:         #B25A00;
+    --radius:       14px;
+    --maxw:         820px;
+    --sans: "IBM Plex Sans KR", -apple-system, "Apple SD Gothic Neo", system-ui, sans-serif;
+    --serif: "Noto Serif KR", Georgia, "Apple SD Gothic Neo", serif;
+    --mono: "IBM Plex Mono", "SF Mono", ui-monospace, "Menlo", monospace;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-weight: 400;
+    line-height: 1.78;
+    letter-spacing: -0.005em;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: var(--maxw);
+    margin: 0 auto;
+    padding: 0 24px 100px;
+  }
+
+  /* ── BACK LINK ── */
+  .backlink {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    margin-top: 30px;
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    color: var(--ink-faint);
+    text-decoration: none;
+    transition: color 0.18s, gap 0.18s;
+  }
+  .backlink:hover { color: var(--yonsei-mid); gap: 11px; }
+  .backlink .a { transition: transform 0.18s; }
+
+  /* ── HERO ── */
+  .hero {
+    padding: 30px 0 48px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 18px;
+  }
+
+  .hero h1 {
+    font-family: var(--serif);
+    font-weight: 700;
+    font-size: clamp(34px, 6.5vw, 54px);
+    line-height: 1.12;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    margin-bottom: 20px;
+  }
+  .hero h1 .accent { color: var(--yonsei); }
+
+  .hero-sub {
+    font-size: clamp(15px, 2.2vw, 17px);
+    color: var(--ink-soft);
+    font-weight: 300;
+    max-width: 36em;
+    line-height: 1.85;
+  }
+
+  /* hero belief-update viz */
+  .belief {
+    margin-top: 38px;
+    background: var(--formula-bg);
+    border-radius: var(--radius);
+    padding: 26px 26px 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .belief-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 6px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .belief-title {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    color: var(--formula-acc);
+    text-transform: uppercase;
+  }
+  .belief-legend {
+    display: flex;
+    gap: 16px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: #B9CBE6;
+  }
+  .belief-legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .swatch { width: 18px; height: 3px; border-radius: 2px; display: inline-block; }
+  .swatch.prior { background: #5E7BA8; }
+  .swatch.post  { background: #6FB0FF; }
+  canvas { display: block; width: 100%; height: auto; }
+  .belief-eq {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--formula-ink);
+    text-align: center;
+    margin-top: 6px;
+    letter-spacing: 0.02em;
+  }
+  .belief-eq .op { color: var(--formula-acc); }
+
+  /* ── SECTION ── */
+  section { padding-top: 56px; }
+
+  .sec-num {
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--yonsei);
+    letter-spacing: 0.12em;
+    margin-bottom: 10px;
+  }
+
+  h2 {
+    font-family: var(--serif);
+    font-weight: 700;
+    font-size: clamp(23px, 4vw, 30px);
+    line-height: 1.25;
+    letter-spacing: -0.015em;
+    color: var(--ink);
+    margin-bottom: 18px;
+  }
+
+  h3 {
+    font-family: var(--sans);
+    font-weight: 600;
+    font-size: 17px;
+    color: var(--ink);
+    margin: 26px 0 10px;
+    letter-spacing: -0.01em;
+  }
+
+  p { color: var(--ink-soft); margin-bottom: 14px; }
+  p strong { color: var(--ink); font-weight: 600; }
+  .lead { font-size: 16px; color: var(--ink-soft); }
+
+  a.inline { color: var(--yonsei-mid); text-decoration: none; border-bottom: 1px solid var(--yonsei-line); }
+  a.inline:hover { border-bottom-color: var(--yonsei-mid); }
+
+  /* formula block */
+  .formula {
+    font-family: var(--mono);
+    font-size: 15px;
+    background: var(--formula-bg);
+    color: var(--formula-ink);
+    border-radius: 10px;
+    padding: 20px 22px;
+    margin: 18px 0;
+    overflow-x: auto;
+    line-height: 2;
+    letter-spacing: 0.01em;
+  }
+  .formula .acc { color: var(--formula-acc); }
+  .formula .lbl { color: #8FA8CC; font-size: 12px; }
+
+  /* the 3-step flow */
+  .flow {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr auto 1fr;
+    gap: 10px;
+    align-items: stretch;
+    margin: 22px 0;
+  }
+  .flow-step {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 16px 16px 18px;
+    text-align: center;
+  }
+  .flow-step .k {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    color: var(--yonsei);
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 6px;
+  }
+  .flow-step .ko { font-weight: 600; color: var(--ink); font-size: 15px; display: block; margin-bottom: 6px; }
+  .flow-step .d { font-size: 12.5px; color: var(--ink-soft); line-height: 1.6; }
+  .flow-arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--yonsei-mid);
+    font-size: 20px;
+    font-weight: 700;
+  }
+  .flow-step.post { border-color: var(--yonsei-line); background: var(--yonsei-light); }
+
+  /* metric cards */
+  .metrics { display: grid; gap: 14px; margin: 20px 0; }
+  .metric {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--yonsei);
+    border-radius: 10px;
+    padding: 18px 20px;
+  }
+  .metric .name {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--yonsei);
+    letter-spacing: 0.02em;
+    margin-bottom: 4px;
+  }
+  .metric .ko { font-weight: 600; color: var(--ink); margin-bottom: 7px; }
+  .metric p { margin: 0; font-size: 14px; }
+
+  /* callout */
+  .callout {
+    background: var(--yonsei-light);
+    border: 1px solid var(--yonsei-line);
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin: 20px 0;
+    font-size: 14.5px;
+    color: var(--ink-soft);
+  }
+  .callout .tag {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--yonsei);
+    display: block;
+    margin-bottom: 6px;
+  }
+  .callout.warn { background: #FFF6EC; border-color: #F2D9B8; }
+  .callout.warn .tag { color: var(--warn); }
+
+  /* decision bar */
+  .decision {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 22px;
+    margin: 20px 0;
+  }
+  .gauge {
+    position: relative;
+    height: 44px;
+    border-radius: 8px;
+    background: linear-gradient(90deg,
+      #C2453C 0%, #C2453C 2.5%,
+      #E8EDF4 2.5%, #E8EDF4 97.5%,
+      var(--good) 97.5%, var(--good) 100%);
+    margin: 16px 0 8px;
+    overflow: hidden;
+  }
+  .gauge .zone-lbl {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    font-family: var(--mono); font-size: 11px; font-weight: 600; color: #fff;
+    white-space: nowrap;
+  }
+  .gauge .mid {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+    font-family: var(--mono); font-size: 12px; color: var(--ink-faint);
+  }
+  .gauge-scale {
+    display: flex; justify-content: space-between;
+    font-family: var(--mono); font-size: 11px; color: var(--ink-faint);
+  }
+
+  /* prior distribution viz */
+  .prior-viz {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 22px 0 8px;
+  }
+  .prior-card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 16px 16px 14px;
+  }
+  .prior-card .pc-top {
+    display: flex; align-items: baseline; justify-content: space-between;
+    gap: 8px; margin-bottom: 12px; flex-wrap: wrap;
+  }
+  .prior-card .pc-ko { font-weight: 600; color: var(--ink); font-size: 14px; }
+  .prior-card .pc-eq {
+    font-family: var(--mono); font-size: 12px; font-weight: 600;
+    color: var(--yonsei); background: var(--yonsei-light);
+    border: 1px solid var(--yonsei-line); border-radius: 6px; padding: 2px 8px;
+  }
+  .pc-plot { display: flex; align-items: stretch; gap: 6px; }
+  .pc-yaxis {
+    writing-mode: vertical-rl; transform: rotate(180deg);
+    font-family: var(--mono); font-size: 10.5px; color: var(--ink-faint);
+    text-align: center; letter-spacing: 0.04em; flex-shrink: 0; padding: 4px 0;
+  }
+  .pc-plot canvas { flex: 1; min-width: 0; height: auto; }
+  .pc-xaxis {
+    text-align: center; font-family: var(--mono); font-size: 10.5px;
+    color: var(--ink-faint); letter-spacing: 0.04em; margin-top: 2px; padding-left: 18px;
+  }
+  .pc-note { font-size: 12.5px; color: var(--ink-soft); line-height: 1.6; margin-top: 10px; }
+  .pc-note b { color: var(--ink); font-weight: 600; }
+
+  @media (max-width: 620px) {
+    .prior-viz { grid-template-columns: 1fr; }
+  }
+
+  /* table */
+  .table-scroll { overflow-x: auto; margin: 20px 0; -webkit-overflow-scrolling: touch; }
+  table { border-collapse: collapse; width: 100%; min-width: 540px; font-size: 14px; }
+  th, td { text-align: left; padding: 13px 16px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  thead th {
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--ink-faint); font-weight: 600; border-bottom: 2px solid var(--line);
+  }
+  tbody th { font-weight: 600; color: var(--ink); width: 24%; }
+  td { color: var(--ink-soft); }
+  td.freq { background: var(--surface-2); }
+  tbody tr:last-child th, tbody tr:last-child td { border-bottom: none; }
+
+  ul.clean { list-style: none; margin: 14px 0; padding: 0; }
+  ul.clean li {
+    position: relative; padding-left: 22px; margin-bottom: 10px;
+    color: var(--ink-soft); font-size: 14.5px;
+  }
+  ul.clean li::before {
+    content: ''; position: absolute; left: 4px; top: 11px;
+    width: 6px; height: 6px; border-radius: 50%; background: var(--yonsei-mid);
+  }
+  ul.clean li b { color: var(--ink); font-weight: 600; }
+
+  .req-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 18px 0; }
+  .req {
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: 10px; padding: 16px 18px;
+  }
+  .req .h { font-weight: 600; color: var(--ink); margin-bottom: 8px; font-size: 14px; }
+  .req .v { font-family: var(--mono); font-size: 13px; color: var(--yonsei); }
+  .req .v span { color: var(--ink-soft); }
+
+  /* footer */
+  footer {
+    margin-top: 64px; padding-top: 24px; border-top: 1px solid var(--line);
+    font-size: 13px; color: var(--ink-faint); font-family: var(--mono); letter-spacing: 0.02em;
+    line-height: 1.9;
+  }
+  footer a { color: var(--yonsei-mid); text-decoration: none; }
+
+  @media (max-width: 620px) {
+    .flow { grid-template-columns: 1fr; }
+    .flow-arrow { transform: rotate(90deg); padding: 2px 0; }
+    .req-grid { grid-template-columns: 1fr; }
+  }
+
+  .rise { opacity: 0; transform: translateY(14px); animation: rise 0.7s cubic-bezier(0.2,0.7,0.3,1) forwards; }
+  @keyframes rise { to { opacity: 1; transform: none; } }
+
+  @media (prefers-reduced-motion: reduce) {
+    .rise { animation: none; opacity: 1; transform: none; }
+    html { scroll-behavior: auto; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <!-- BACK -->
+  <a class="backlink rise" href="index.html"><span class="a">←</span> 목록으로</a>
+
+  <!-- HERO -->
+  <header class="hero">
+    <p class="eyebrow rise">Bayesian Statistics · Amplitude Experiment</p>
+    <h1 class="rise" style="animation-delay:.06s">
+      <span class="accent">베이지안</span> 가설 검정
+    </h1>
+    <p class="hero-sub rise" style="animation-delay:.12s">
+      "이 변형이 정말 더 나을 확률은 얼마인가?" — 베이지안 통계는 사전 믿음(Prior)에
+      관측된 데이터(Likelihood)를 더해, 데이터가 쌓일수록 점점 또렷해지는
+      사후 분포(Posterior)로 의사결정을 내립니다.
+    </p>
+
+    <div class="belief rise" style="animation-delay:.2s">
+      <div class="belief-head">
+        <span class="belief-title">믿음의 갱신 — Prior → Posterior</span>
+        <span class="belief-legend">
+          <span><i class="swatch prior"></i>사전 분포</span>
+          <span><i class="swatch post"></i>사후 분포</span>
+        </span>
+      </div>
+      <canvas id="beliefCanvas" width="740" height="200" aria-label="데이터가 쌓이면서 평평한 사전 분포가 뾰족한 사후 분포로 갱신되는 애니메이션"></canvas>
+      <p class="belief-eq">
+        P(θ | data) &nbsp;<span class="op">&prop;</span>&nbsp; P(data | θ) &nbsp;<span class="op">&times;</span>&nbsp; P(θ)
+      </p>
+    </div>
+  </header>
+
+  <!-- 01 -->
+  <section class="rise">
+    <p class="sec-num">01 — 개념</p>
+    <h2>빈도주의와 무엇이 다른가</h2>
+    <p class="lead">
+      전통적인 빈도주의(Frequentist) 검정은 <strong>p-value</strong>로
+      "귀무가설이 참일 때 이런 데이터가 나올 확률"을 묻습니다. 직관과 반대 방향이라
+      해석이 어렵습니다.
+    </p>
+    <p>
+      베이지안은 질문을 뒤집습니다. <strong>"데이터를 봤을 때, 가설이 참일 확률"</strong>을
+      직접 계산합니다. 그래서 결과가 곧바로 "Treatment가 Control보다 나을 확률 96%"처럼
+      읽히고, 이해관계자에게 설명하기 쉽습니다.
+    </p>
+  </section>
+
+  <!-- 02 -->
+  <section class="rise">
+    <p class="sec-num">02 — 구조</p>
+    <h2>가설 검정의 세 단계</h2>
+    <p>
+      베이지안 추론은 세 요소의 결합입니다. 핵심은 <strong>베이즈 정리</strong>로,
+      사전 믿음을 데이터로 갱신해 사후 분포를 만들어냅니다.
+    </p>
+
+    <div class="flow">
+      <div class="flow-step">
+        <span class="k">Prior</span>
+        <span class="ko">사전 분포</span>
+        <span class="d">실험 전 가지고 있던 믿음. Amplitude는 중립적인 무정보 prior를 사용.</span>
+      </div>
+      <div class="flow-arrow">×</div>
+      <div class="flow-step">
+        <span class="k">Likelihood</span>
+        <span class="ko">우도</span>
+        <span class="d">관측된 노출·전환 데이터가 각 파라미터에서 나타날 가능성.</span>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step post">
+        <span class="k">Posterior</span>
+        <span class="ko">사후 분포</span>
+        <span class="d">데이터로 갱신된 새로운 믿음. 모든 지표가 여기서 계산됨.</span>
+      </div>
+    </div>
+
+    <div class="formula">
+      <span class="lbl">베이즈 정리</span><br>
+      P(<span class="acc">&theta;</span> | data) = <span class="lbl">[</span> P(data | <span class="acc">&theta;</span>) &times; P(<span class="acc">&theta;</span>) <span class="lbl">]</span> &divide; P(data)<br>
+      <span class="lbl">사후분포&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; = 우도 &times; 사전분포 &divide; 정규화 상수</span>
+    </div>
+    <p style="font-size:14px">
+      여기서 <span style="font-family:var(--mono)">θ</span>(theta)는 우리가 알고 싶은 값 —
+      예를 들어 변형의 <strong>진짜 전환율</strong>입니다.
+    </p>
+  </section>
+
+  <!-- 03 -->
+  <section class="rise">
+    <p class="sec-num">03 — Prior</p>
+    <h2>사전 분포는 어떻게 설정하는가</h2>
+    <p>
+      Amplitude는 실험자의 주관이 결론을 흔들지 않도록 <strong>무정보 사전분포
+      (Uninformative Prior)</strong>를 사용합니다. 데이터 스스로 결론을 이끌게 하는 것이
+      목적입니다.
+    </p>
+
+    <ul class="clean">
+      <li><b>이진(Binary) 지표</b> — 전환율처럼 0/1로 측정되는 지표에는 <span style="font-family:var(--mono)">Beta(1, 1)</span>, 즉 0과 1 사이 모든 값에 동일한 확률을 부여하는 <b>균일 분포</b>를 사용합니다.</li>
+      <li><b>연속(Numeric) 지표</b> — 수익, 체류시간처럼 연속적인 지표에는 <b>무정보 정규 분포(Normal Prior)</b>를 사용합니다.</li>
+    </ul>
+
+    <div class="prior-viz">
+      <div class="prior-card">
+        <div class="pc-top">
+          <span class="pc-ko">이진 지표 — 균일 분포</span>
+          <span class="pc-eq">Beta(1, 1)</span>
+        </div>
+        <div class="pc-plot">
+          <span class="pc-yaxis">확률 밀도 P(θ)</span>
+          <canvas id="priorBeta" width="320" height="180"
+            aria-label="Beta(1,1) 사전분포: 0과 1 사이에서 완전히 평평한 직선"></canvas>
+        </div>
+        <div class="pc-xaxis">θ · 가능한 전환율 (0 → 1)</div>
+        <p class="pc-note">선이 <b>완전히 평평</b>합니다 — 0%든 100%든 모든 전환율을
+          똑같이 그럴듯하게 봅니다. "아직 아무것도 모른다"는 출발점입니다.</p>
+      </div>
+
+      <div class="prior-card">
+        <div class="pc-top">
+          <span class="pc-ko">연속 지표 — 정규 분포</span>
+          <span class="pc-eq">Normal(μ, σ²<sub>큰값</sub>)</span>
+        </div>
+        <div class="pc-plot">
+          <span class="pc-yaxis">확률 밀도 P(θ)</span>
+          <canvas id="priorNormal" width="320" height="180"
+            aria-label="무정보 정규 사전분포: 매우 넓고 완만한 종 모양 곡선"></canvas>
+        </div>
+        <div class="pc-xaxis">θ · 지표 값 (예: 평균 주문 금액)</div>
+        <p class="pc-note">분산을 <b>아주 크게</b> 둔 넓고 완만한 종 모양입니다. 중심을
+          살짝 선호하되 사실상 넓은 범위를 거의 동등하게 허용합니다.</p>
+      </div>
+    </div>
+
+    <div class="callout">
+      <span class="tag">직관</span>
+      Beta(1,1)은 "아직 아무것도 모른다"는 출발점입니다. 노출과 전환이 쌓일수록
+      분포는 한 점으로 수렴하며, 위 히어로 그래프처럼 점점 뾰족해집니다.
+    </div>
+  </section>
+
+  <!-- 04 -->
+  <section class="rise">
+    <p class="sec-num">04 — 우도</p>
+    <h2>우도: 데이터로 후보를 채점하기</h2>
+    <div class="callout">
+      <span class="tag">한 줄 요약</span>
+      <b style="color:var(--ink)">우도(Likelihood)</b>는 "특정 θ 후보가 진짜라고 가정했을 때,
+      지금 <b style="color:var(--ink)">관측된 데이터가 나올 법한 정도</b>"를 점수로 매긴 값입니다.
+      모든 θ 후보를 이 점수로 채점하면, 데이터와 가장 잘 맞는 후보가 드러납니다.
+    </div>
+    <p class="lead">
+      우리는 진짜 전환율 <span style="font-family:var(--mono)">θ</span>를 직접 "얻는" 게
+      아닙니다. <strong>θ가 0%부터 100% 중 어딘가에 있을 텐데, 과연 어디일까?</strong>
+      하고 후보들을 한 줄로 세워 놓고, 데이터로 채점하는 것입니다.
+    </p>
+
+    <h3>θ는 '정답 후보들의 리스트'다</h3>
+    <p>
+      현실의 진짜 전환율 θ는 단 하나의 고정된 값(예: 5.432…)이겠지만, 우리는 그걸 모릅니다.
+      그래서 베이지안은 θ가 될 수 있는 <strong>모든 가능성(0%~100%의 모든 실수)</strong>을
+      테이블 위에 전부 펼쳐놓습니다 — 이것을 <strong>파라미터 공간(Parameter Space)</strong>이라
+      부릅니다.
+    </p>
+    <ul class="clean">
+      <li><b>사전 단계</b> — 데이터가 없으니 "θ가 1%일 점수도, 5%일 점수도, 90%일 점수도 다 똑같다"고 평평하게 둡니다. (앞 섹션의 균일 분포)</li>
+      <li><b>우도 단계</b> — 실제 데이터가 들어오면, 모든 θ 후보에게 묻습니다. <i>"θ=5% 너한테서 이 데이터가 나왔을 법해?"</i> → 그럴듯하면 높은 점수, 터무니없으면 0점.</li>
+      <li><b>사후 단계</b> — 채점이 끝나면 데이터와 잘 맞는 θ 후보 근처의 점수가 압도적으로 높아집니다.</li>
+    </ul>
+
+    <div class="callout">
+      <span class="tag">비유 — 범인 몽타주</span>
+      <b style="color:var(--ink)">θ</b>는 진짜 범인의 얼굴(아직 모름),
+      <b style="color:var(--ink)">θ의 후보들</b>은 용의 선상의 전 국민 명단입니다.
+      <b style="color:var(--ink)">데이터(CCTV)</b>가 "키 180cm 이상, 안경 착용"이라고 알려주면,
+      <b style="color:var(--ink)">우도</b>는 명단을 한 명씩 대조하며 그럴듯함을 채점합니다 —
+      키 160cm는 0점, 키 183cm에 안경 쓴 사람은 99점. 점수가 높은 후보들만 남긴 것이
+      <b style="color:var(--ink)">사후 분포</b>입니다.
+    </div>
+
+    <h3>이진 지표의 우도 공식 — 이항 분포</h3>
+    <p>
+      전환율·클릭률처럼 성공/실패(Yes or No)인 이진 데이터는 <strong>이항 분포
+      (Binomial Distribution)</strong>로 각 후보의 점수를 계산합니다. 총 유저 수를
+      <span style="font-family:var(--mono)">n</span>, 전환된 수를
+      <span style="font-family:var(--mono)">k</span>, 검증할 가상의 전환율 후보를
+      <span style="font-family:var(--mono)">θ</span>라 하면:
+    </p>
+    <div class="formula">
+      P(Data | <span class="acc">θ</span>) = C(n, k) &middot; <span class="acc">θ</span><sup>k</sup> &middot; (1 &minus; <span class="acc">θ</span>)<sup>n&minus;k</sup><br>
+      <span class="lbl">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;↑경우의 수&nbsp;&nbsp;&nbsp;&nbsp;↑k번 성공&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;↑(n−k)번 실패</span>
+    </div>
+
+    <h3>직접 계산해보기 — 10명 중 3명 전환 (n=10, k=3)</h3>
+    <p>두 후보, θ=10%와 θ=30%의 우도 점수를 비교해 봅니다.</p>
+    <div class="formula">
+      <span class="lbl">① θ = 0.1 후보 — "진짜 전환율 10%인데 10명 중 3명이 살 확률은?"</span><br>
+      P(Data | <span class="acc">0.1</span>) = C(10,3) &times; 0.1<sup>3</sup> &times; 0.9<sup>7</sup><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;= 120 &times; 0.001 &times; 0.478 &asymp; <span class="acc">0.057</span>&nbsp;<span class="lbl">(5.7%)</span><br>
+      <br>
+      <span class="lbl">② θ = 0.3 후보 — "진짜 전환율 30%인데 10명 중 3명이 살 확률은?"</span><br>
+      P(Data | <span class="acc">0.3</span>) = C(10,3) &times; 0.3<sup>3</sup> &times; 0.7<sup>7</sup><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;= 120 &times; 0.027 &times; 0.082 &asymp; <span class="acc">0.267</span>&nbsp;<span class="lbl">(26.7%)</span>
+    </div>
+
+    <h3>우도비 (Likelihood Ratio) — 어느 후보를 더 지지하는가</h3>
+    <p>
+      두 후보의 점수를 나눈 것이 <strong>우도비</strong>입니다. 데이터가 한 가설을
+      다른 가설보다 <strong>몇 배 더 지지하는지</strong>를 말해줍니다.
+    </p>
+    <div class="formula">
+      LR = P(Data | <span class="acc">0.3</span>) &divide; P(Data | <span class="acc">0.1</span>)
+      = 0.267 &divide; 0.057 &asymp; <span class="acc">4.6</span><br>
+      <span class="lbl">→ 데이터는 '30% 후보'를 '10% 후보'보다 약 4.6배 더 지지한다</span>
+    </div>
+
+    <h3>모든 후보를 채점하면 — 우도 곡선</h3>
+    <p>
+      컴퓨터는 이 계산을 θ=0%, 1%, … 100%까지 전부 수행합니다. 점수를 이으면
+      관측 비율 <strong>3/10 = 30%</strong> 지점에서 가장 높이 솟는 매끄러운 곡선,
+      즉 <strong>우도 함수(Likelihood Function)</strong>가 됩니다.
+    </p>
+
+    <div class="prior-card">
+      <div class="pc-top">
+        <span class="pc-ko">우도 함수 — n=10, k=3</span>
+        <span class="pc-eq">θ<sup>3</sup>(1−θ)<sup>7</sup></span>
+      </div>
+      <div class="pc-plot">
+        <span class="pc-yaxis">우도 (그럴듯함 점수)</span>
+        <canvas id="likCurve" width="700" height="210"
+          aria-label="이항 우도 곡선: θ=0.3 에서 최고점을 찍는 비대칭 봉우리"></canvas>
+      </div>
+      <div class="pc-xaxis">θ · 가능한 전환율 후보 (0 → 1)</div>
+    </div>
+
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr><th>θ 후보</th><th>우도 점수</th><th>해석</th></tr>
+        </thead>
+        <tbody>
+          <tr><th>0%</th><td>0</td><td>전환율 0%면 3명이 살 수 없음</td></tr>
+          <tr><th>10%</th><td>0.057</td><td>가능하지만 낮음</td></tr>
+          <tr><th>30%</th><td><b style="color:var(--yonsei)">0.267 — 최고점</b></td><td>관측 비율 3/10과 일치</td></tr>
+          <tr><th>50%</th><td>0.117</td><td>점점 내려감</td></tr>
+          <tr><th>100%</th><td>0</td><td>100%면 10명 다 샀어야 함</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout">
+      <span class="tag">다음 단계</span>
+      이렇게 얻은 데이터의 성적표(우도 곡선)를 <b style="color:var(--ink)">사전 분포와 곱하면</b>
+      최종 결론인 <b style="color:var(--ink)">사후 분포</b>가 됩니다 —
+      <span style="font-family:var(--mono)">P(θ|data) ∝ P(data|θ) × P(θ)</span>.
+    </div>
+  </section>
+
+  <!-- 05 -->
+  <section class="rise">
+    <p class="sec-num">05 — 지표</p>
+    <h2>사후 분포에서 읽어내는 지표</h2>
+    <p>모든 의사결정 지표는 사후 분포에서 직접 계산됩니다.</p>
+
+    <div class="metrics">
+      <div class="metric">
+        <div class="name">Chance to Beat Control</div>
+        <div class="ko">변형이 Control을 이길 확률</div>
+        <p>"이 변형이 실제로 더 나을 확률은?"에 답합니다. 사후 분포에서
+          Treatment &gt; Control인 영역을 적분해 얻습니다. p-value와 근본적으로 다른,
+          직관적인 확률값입니다.</p>
+      </div>
+      <div class="metric">
+        <div class="name">Credible Interval</div>
+        <div class="ko">신용 구간</div>
+        <p>두 변형 간 진짜 차이가 95% 확률로 들어가는 범위. 빈도주의의 신뢰구간과 달리
+          <strong>파라미터 자체에 대한 확률</strong>을 직접 진술할 수 있습니다.</p>
+      </div>
+      <div class="metric">
+        <div class="name">Chance to Be Best</div>
+        <div class="ko">최선일 확률 (다변량)</div>
+        <p>변형이 3개 이상인 실험에서, 각 변형이 <strong>나머지 모든 변형</strong>을
+          앞설 확률을 보여줍니다.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 06 -->
+  <section class="rise">
+    <p class="sec-num">06 — 판단</p>
+    <h2>언제 유의미하다고 보는가</h2>
+    <p>
+      <strong>Chance to Outperform Threshold</strong>(0~100%)를 설정합니다. 보통 95%를
+      쓰며, 양측 검정을 반영해 다음과 같이 분기됩니다.
+    </p>
+
+    <div class="decision">
+      <div class="gauge" aria-hidden="true">
+        <span class="zone-lbl" style="left:6px;">열등</span>
+        <span class="mid">유의하지 않음</span>
+        <span class="zone-lbl" style="right:6px;">우수</span>
+      </div>
+      <div class="gauge-scale"><span>0%</span><span>2.5%</span><span>50%</span><span>97.5%</span><span>100%</span></div>
+    </div>
+
+    <ul class="clean">
+      <li>Chance to Beat Control <b>≥ 97.5%</b> → 변형이 <b>유의미하게 우수</b></li>
+      <li>Chance to Beat Control <b>≤ 2.5%</b> → 변형이 <b>유의미하게 열등</b></li>
+      <li>그 사이 → 아직 판단 보류 (데이터 더 필요)</li>
+    </ul>
+    <p style="font-size:14px">
+      95% 임계값이 97.5% / 2.5%로 갈라지는 이유는, 양측 검정에서 신용구간 95%가 양 꼬리에
+      각각 2.5%씩 남기 때문입니다.
+    </p>
+  </section>
+
+  <!-- 07 -->
+  <section class="rise">
+    <p class="sec-num">07 — 예시</p>
+    <h2>Posterior 계산 맛보기</h2>
+    <p>
+      노출 1회, 전환 0회인 변형의 평균은 0%가 아닙니다. Beta(1,1) prior가 반영되기 때문입니다.
+    </p>
+    <div class="formula">
+      <span class="lbl">사후 평균 = (전환 수 + &alpha;) / (노출 수 + &alpha; + &beta;)</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;= (0 + <span class="acc">1</span>) / (1 + <span class="acc">1</span> + <span class="acc">1</span>) = <span class="acc">33.3%</span>
+    </div>
+    <p style="font-size:14px">
+      데이터가 적을 때는 prior의 영향이 크지만, 노출·전환이 쌓일수록 사후 평균은
+      실제 관측 전환율로 수렴합니다.
+    </p>
+  </section>
+
+  <!-- 08 -->
+  <section class="rise">
+    <p class="sec-num">08 — 요건 &amp; 제약</p>
+    <h2>실무에서 알아둘 것</h2>
+
+    <h3>최소 데이터 요건 (변형별)</h3>
+    <div class="req-grid">
+      <div class="req">
+        <div class="h">이진 지표 (전환율 등)</div>
+        <div class="v">≥ 25 <span>전환</span> &nbsp;·&nbsp; ≥ 100 <span>노출</span></div>
+      </div>
+      <div class="req">
+        <div class="h">연속 지표 (수익 등)</div>
+        <div class="v">≥ 100 <span>노출</span></div>
+      </div>
+    </div>
+
+    <div class="callout warn">
+      <span class="tag">제약사항</span>
+      Amplitude의 베이지안 구현은 <strong>CUPED(분산 감소)를 지원하지 않습니다.</strong>
+      분산 감소가 중요한 실험이라면 빈도주의 기반의 Sequential Testing(mSPRT)을
+      고려하세요.
+    </div>
+  </section>
+
+  <!-- 09 -->
+  <section class="rise">
+    <p class="sec-num">09 — 비교</p>
+    <h2>빈도주의 vs. 베이지안</h2>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr><th></th><th>빈도주의 (Sequential)</th><th>베이지안 (Bayesian)</th></tr>
+        </thead>
+        <tbody>
+          <tr><th>핵심 질문</th><td class="freq">데이터가 H₀ 하에서 나올 확률은?</td><td>가설이 참일 확률은?</td></tr>
+          <tr><th>판단 기준</th><td class="freq">p-value &lt; α → H₀ 기각</td><td>Chance to Beat ≥ 97.5%</td></tr>
+          <tr><th>구간 해석</th><td class="freq">신뢰구간 (Confidence)</td><td>신용구간 (Credible) — 직접적 확률</td></tr>
+          <tr><th>중간 확인</th><td class="freq">mSPRT로 always-valid</td><td>자연스럽게 허용</td></tr>
+          <tr><th>분산 감소</th><td class="freq">CUPED 지원</td><td>미지원</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer>
+    실험을 위한 통계지식 · Statistics for Experimentation<br>
+    출처: <a href="https://amplitude.com/docs/feature-experiment/experiment-theory/bayesian-statistics">Amplitude Docs — Bayesian Statistics</a>
+  </footer>
+
+</div>
+
+<script>
+(function () {
+  var canvas = document.getElementById('beliefCanvas');
+  if (!canvas) return;
+  var ctx = canvas.getContext('2d');
+  var W = canvas.width, H = canvas.height;
+  var padL = 8, padR = 8, padB = 22, padT = 12;
+  var plotW = W - padL - padR, plotH = H - padT - padB;
+
+  // Beta pdf shape (unnormalized), normalized to peak = 1 for drawing
+  function betaShape(a, b, n) {
+    var ys = [], max = 0;
+    for (var i = 0; i <= n; i++) {
+      var x = i / n;
+      var xa = Math.pow(Math.max(x, 1e-6), a - 1);
+      var xb = Math.pow(Math.max(1 - x, 1e-6), b - 1);
+      var y = xa * xb;
+      ys.push(y);
+      if (y > max) max = y;
+    }
+    if (max > 0) for (var j = 0; j < ys.length; j++) ys[j] /= max;
+    return ys;
+  }
+
+  var N = 160;
+  var priorYs = betaShape(1, 1, N);
+  var TA = 72, TB = 40;
+
+  function curveToPath(ys) {
+    ctx.beginPath();
+    for (var i = 0; i < ys.length; i++) {
+      var x = padL + (i / N) * plotW;
+      var y = padT + plotH - ys[i] * plotH;
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+  }
+
+  function draw(t) {
+    ctx.clearRect(0, 0, W, H);
+
+    ctx.strokeStyle = 'rgba(255,255,255,0.14)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(padL, padT + plotH + 0.5);
+    ctx.lineTo(W - padR, padT + plotH + 0.5);
+    ctx.stroke();
+
+    ctx.fillStyle = 'rgba(185,203,230,0.7)';
+    ctx.font = '11px ui-monospace, monospace';
+    ctx.textAlign = 'center';
+    [0, 0.25, 0.5, 0.75, 1].forEach(function (v) {
+      var x = padL + v * plotW;
+      ctx.fillText(v.toFixed(2), x, H - 6);
+    });
+
+    curveToPath(priorYs);
+    ctx.strokeStyle = '#5E7BA8';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([5, 5]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    var ease = t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2,3)/2;
+    var a = 1 + (TA - 1) * ease;
+    var b = 1 + (TB - 1) * ease;
+    var ys = betaShape(a, b, N);
+
+    curveToPath(ys);
+    ctx.lineTo(padL + plotW, padT + plotH);
+    ctx.lineTo(padL, padT + plotH);
+    ctx.closePath();
+    var grad = ctx.createLinearGradient(0, padT, 0, padT + plotH);
+    grad.addColorStop(0, 'rgba(111,176,255,0.38)');
+    grad.addColorStop(1, 'rgba(111,176,255,0.02)');
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    curveToPath(ys);
+    ctx.strokeStyle = '#6FB0FF';
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+  }
+
+  var started = false;
+  function run() {
+    if (started) return; started = true;
+    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) { draw(1); return; }
+    var dur = 1700, t0 = null;
+    function step(ts) {
+      if (t0 === null) t0 = ts;
+      var t = Math.min((ts - t0) / dur, 1);
+      draw(t);
+      if (t < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
+  draw(0);
+  if ('IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function (es) {
+      es.forEach(function (e) { if (e.isIntersecting) { run(); io.disconnect(); } });
+    }, { threshold: 0.4 });
+    io.observe(canvas);
+  } else { run(); }
+})();
+</script>
+
+<script>
+/* Prior distribution mini-plots: Beta(1,1) flat + wide Normal bell + likelihood curve */
+(function () {
+  function plot(id, opts) {
+    var c = document.getElementById(id);
+    if (!c) return;
+    var ctx = c.getContext('2d');
+    var W = c.width, H = c.height;
+    var L = 6, R = 8, B = 20, T = 14;
+    var pw = W - L - R, ph = H - T - B;
+    var baseY = T + ph;
+
+    ctx.strokeStyle = '#D5DEEC';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(L, T - 2); ctx.lineTo(L, baseY + 0.5);
+    ctx.lineTo(W - R, baseY + 0.5);
+    ctx.stroke();
+
+    ctx.fillStyle = '#8492A8';
+    ctx.font = '10px ui-monospace, monospace';
+    ctx.textAlign = 'center';
+    opts.xticks.forEach(function (tk) {
+      var x = L + tk.p * pw;
+      ctx.fillText(tk.t, x, H - 5);
+      ctx.strokeStyle = '#E2E9F3';
+      ctx.beginPath(); ctx.moveTo(x, baseY); ctx.lineTo(x, baseY + 3); ctx.stroke();
+    });
+
+    var N = 200, ys = [], max = 0;
+    for (var i = 0; i <= N; i++) {
+      var y = opts.f(i / N);
+      ys.push(y); if (y > max) max = y;
+    }
+    var topPad = 10;
+    function px(i) { return L + (i / N) * pw; }
+    function py(v) { return T + topPad + (ph - topPad) * (1 - (max ? v / max : 0)); }
+
+    ctx.beginPath();
+    ctx.moveTo(px(0), baseY);
+    for (var k = 0; k <= N; k++) ctx.lineTo(px(k), py(ys[k]));
+    ctx.lineTo(px(N), baseY);
+    ctx.closePath();
+    var g = ctx.createLinearGradient(0, T, 0, baseY);
+    g.addColorStop(0, 'rgba(30,95,176,0.22)');
+    g.addColorStop(1, 'rgba(30,95,176,0.02)');
+    ctx.fillStyle = g;
+    ctx.fill();
+
+    ctx.beginPath();
+    for (var m = 0; m <= N; m++) {
+      var X = px(m), Y = py(ys[m]);
+      if (m === 0) ctx.moveTo(X, Y); else ctx.lineTo(X, Y);
+    }
+    ctx.strokeStyle = '#00337F';
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+
+    if (opts.vline) {
+      var mx = L + opts.vline.p * pw;
+      ctx.strokeStyle = 'rgba(30,95,176,0.5)';
+      ctx.setLineDash([4, 4]); ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(mx, T + 2); ctx.lineTo(mx, baseY); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = '#1E5FB0'; ctx.font = '600 10px ui-monospace, monospace';
+      ctx.textAlign = mx > W * 0.7 ? 'right' : (mx < W * 0.3 ? 'left' : 'center');
+      ctx.fillText(opts.vline.label, mx, T + 7);
+      ctx.textAlign = 'center';
+    }
+
+    if (opts.dots) {
+      opts.dots.forEach(function (d) {
+        var idx = Math.round(d.p * N);
+        var X = px(idx), Y = py(ys[idx]);
+        ctx.beginPath(); ctx.arc(X, Y, 4, 0, Math.PI * 2);
+        ctx.fillStyle = '#fff'; ctx.fill();
+        ctx.lineWidth = 2; ctx.strokeStyle = '#00337F'; ctx.stroke();
+        ctx.fillStyle = '#46566E'; ctx.font = '10px ui-monospace, monospace';
+        ctx.fillText(d.label, X, Y - 9);
+      });
+    }
+  }
+
+  plot('priorBeta', {
+    f: function () { return 1; },
+    xticks: [{p:0,t:'0'},{p:0.5,t:'0.5'},{p:1,t:'1'}]
+  });
+
+  plot('priorNormal', {
+    f: function (x) { var d = (x - 0.5) / 0.34; return Math.exp(-0.5 * d * d); },
+    vline: {p:0.5, label:'μ'},
+    xticks: [{p:0.16,t:'낮음'},{p:0.5,t:'μ'},{p:0.84,t:'높음'}]
+  });
+
+  plot('likCurve', {
+    f: function (x) { return Math.pow(x, 3) * Math.pow(1 - x, 7); },
+    vline: {p:0.3, label:'θ=0.3 (3/10) 최고점'},
+    dots: [{p:0.1, label:'0.057'}, {p:0.3, label:'0.267'}],
+    xticks: [{p:0,t:'0'},{p:0.1,t:'0.1'},{p:0.3,t:'0.3'},{p:0.5,t:'0.5'},{p:1,t:'1'}]
+  });
+})();
+</script>
+
+</body>
+</html>
